@@ -1,0 +1,33 @@
+--Question: Which sale staff processed the most orders ?--
+--Step1: Define order processed monthly by each staffs--
+WITH staff_order_count AS (
+SELECT EXTRACT(YEAR FROM o.order_date) AS year1, --extract year from order date/order is placed on what year-- 
+        EXTRACT(MONTH FROM o.order_date) AS month1, -- extract month from order date/order is placed on what month--
+        COUNT(o.order_id) AS order_count, -- number of order are placed--
+        s.first_name -- staff's name--
+FROM orders AS o
+    INNER JOIN staffs as s --joining 2 tables (staffs&orders)--
+    ON o.staff_id = s.staff_id --using staff id to join 2 tables--
+    GROUP BY month1, s.first_name, year1
+    ORDER BY year1 ),
+
+--Step2: Define what is the max order processed for monthly basis--
+max_order AS (
+SELECT  year1, 
+        month1, 
+        MAX(order_count) AS max_count --highest number of orders placed by staffs--
+    FROM staff_order_count
+    GROUP BY year1, month1)
+
+--Step3: Define sale staff who processed orders the most in every month--
+SELECT 
+    s1.year1 AS year2,
+    s1.month1 AS month2,
+    s1.first_name,
+    s1.order_count
+FROM staff_order_count AS s1
+INNER JOIN max_order m 
+  ON s1.year1 = m.year1 
+ AND s1.month1 = m.month1 
+ AND s1.order_count = m.max_count --matching number of orders placed to find top sale staff--
+ORDER BY year2, month2;

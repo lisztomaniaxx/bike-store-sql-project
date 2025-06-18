@@ -1,0 +1,15 @@
+--Question: What are number of new customers registered in each month and year?--
+SELECT
+    EXTRACT(YEAR FROM first_order.first_order_date) AS registration_year,
+    EXTRACT(MONTH FROM first_order.first_order_date) AS registration_month,
+    COUNT (first_order.customer_id) AS new_customers --count number of new customers by counting date of first order--
+FROM (
+--nested query: find the first order date for each customer--
+    SELECT
+        customer_id,
+        MIN(order_date) AS first_order_date --define when were customers registered from first purchasing records--
+    FROM orders
+    GROUP BY customer_id --get customer id with date of first order placed--
+) AS first_order
+GROUP BY registration_year, registration_month
+ORDER BY registration_year, registration_month

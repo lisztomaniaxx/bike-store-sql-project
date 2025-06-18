@@ -1,0 +1,33 @@
+--Question: Which product contributed revenue the most in each month?--
+--Step1: Define total revenue in each month by product--
+WITH revenue AS (
+SELECT 
+    pd.product_name,
+    EXTRACT(YEAR FROM o.order_date) AS sale_year, --order is placed on what year--
+    EXTRACT(MONTH FROM o.order_date) AS sale_month, --order is placed on what month--
+    SUM(oi.list_price * oi.quantity * (1 - oi.discount)) AS total_revenue --sum total revenue--
+FROM orders AS o 
+JOIN order_items AS oi ON o.order_id = oi.order_id
+JOIN products AS pd ON oi.product_id = pd.product_id
+GROUP BY sale_year, sale_month, pd.product_name -- grouping into product name, year, month--
+ORDER BY sale_year),
+
+--Step2: Rank product by amount of revenue generated--
+ranking AS (
+SELECT
+    *,
+    RANK() OVER (PARTITION BY sale_year,sale_month ORDER BY total_revenue DESC) AS product_rank --getting rank of product sold in each month and year by product with highest revenue will be ranked first--
+FROM revenue)
+
+--Step3: define top product in each month and year--
+SELECT
+    sale_year, sale_month, product_name, total_revenue,
+    CASE --identify popularity of product--
+        WHEN product_rank = 1 THEN 'BEST SELLER' --highest rank will be described as best seller--
+        WHEN product_rank = 2 OR product_rank = 3 THEN 'TOP PRODUCT' --top2&3 product will also be decribed as top product--
+        ELSE 'Other' 
+    END AS popularity
+FROM ranking
+ORDER BY sale_year, sale_month, product_rank;
+
+
